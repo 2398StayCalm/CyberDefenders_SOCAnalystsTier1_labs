@@ -1,9 +1,3 @@
-# CyberDefenders_SOCAnalystsTier1_labs
-
-This repository contains write-ups for level 1 labs from CyberDefenders SOC Analysts path. ENJOY!
-
-=Level_1=
-
 ## WEBSTRIKE LAB
 
 Scenario:
