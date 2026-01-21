@@ -13,7 +13,7 @@ Scenario:
 
 Questions:
 
-  #### Q1 :Identifying the geographical origin of the attack facilitates the implementation of geo-blocking measures and the analysis of threat intelligence. From which city did the attack originate?
+  #### Q1:Identifying the geographical origin of the attack facilitates the implementation of geo-blocking measures and the analysis of threat intelligence. From which city did the attack originate?
 
 First we have to deploy VM. We know that the network team prepared a PCAP file for analysis. Now the first tool that comes to mind is **Wireshark**, so let's look for it.We can check the only directory that is visible on a Desktop "Start here". That can be a great first step. In this directory we can see two other directories called "Artifacts" and "Tools". Let's try the second one. There it is! :
 
