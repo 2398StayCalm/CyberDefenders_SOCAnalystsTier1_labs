@@ -1,4 +1,5 @@
-## WEBSTRIKE LAB [https://cyberdefenders.org/blueteam-ctf-challenges/webstrike/]
+## WEBSTRIKE LAB 
+Link to the lab -> [https://cyberdefenders.org/blueteam-ctf-challenges/webstrike/]
 
 Scenario:
   A suspicious file was identified on a company web server, raising alarms within the intranet. The Development team flagged the anomaly, suspecting potential malicious activity. To address the issue, 
