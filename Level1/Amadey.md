@@ -1,4 +1,4 @@
-# 👷Amadey - APT-C-36
+# 💻Amadey - APT-C-36
 
 📌Link to the lab -> [https://cyberdefenders.org/blueteam-ctf-challenges/amadey-apt-c-36/]
 
