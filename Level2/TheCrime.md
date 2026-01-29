@@ -1,4 +1,4 @@
-# 👷The Crime
+# 💻The Crime
 📌Link to the lab -> [https://cyberdefenders.org/blueteam-ctf-challenges/the-crime/]
 
 ### 📓 Scenario:
