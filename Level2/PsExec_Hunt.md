@@ -1,4 +1,4 @@
-# 💻PsExec Hunt
+# 💻 PsExec Hunt
 📌Link to the lab -> [https://cyberdefenders.org/blueteam-ctf-challenges/psexec-hunt/]
 
 ### 📓 Scenario:
