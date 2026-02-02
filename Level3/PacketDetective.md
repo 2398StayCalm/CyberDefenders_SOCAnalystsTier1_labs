@@ -1,4 +1,4 @@
-<img width="1917" height="372" alt="image" src="https://github.com/user-attachments/assets/e5e59a49-143c-413a-b1d7-313baf3f3366" /># 💻 PacketDetective
+# 💻 PacketDetective
 📌Link to the lab -> [https://cyberdefenders.org/blueteam-ctf-challenges/packetdetective/]
 
 ### 📓 Scenario:
