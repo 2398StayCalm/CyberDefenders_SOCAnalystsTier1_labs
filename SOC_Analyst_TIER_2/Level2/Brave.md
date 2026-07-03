@@ -192,19 +192,90 @@ It worked! 🔥
 #### ❔  8: What is the creation date and time of the parent process of powershell.exe?
 
 $${\color{red}__Analysis__}$$
+
+To determine the creation date and time of the parent process of powershell.exe, the memory image was analyzed using Volatility 3 process enumeration plugins. The investigation first required identifying the Process ID (PID) and Parent Process ID (PPID) associated with the PowerShell process before reconstructing the process hierarchy.
+
+The initial step involved listing active processes using the windows.pslist plugin: _python3 vol.py -f 20210430-Win10Home-20H2-64bit-memdump.mem windows.pslist_
+
+Reviewing the process list revealed that powershell.exe was running with PID 5096 and PPID 4352. After identifying the relevant PID, the windows.pstree plugin was used to reconstruct the process tree and display parent-child relationships: _python3 vol.py -f 20210430-Win10Home-20H2-64bit-memdump.mem windows.pstree --pid 5096_
+
+The process tree showed that PID 4352 corresponded to explorer.exe, which was the direct parent process of powershell.exe. Examination of the process metadata revealed that explorer.exe was created on _2021-04-30 17:39_.
+
 $${\color{yellow}__Evidence \space Interpretation__}$$
+
+Parent-child process relationships are an important source of forensic evidence because they help reconstruct user activity and process execution chains. In Windows environments, PowerShell is commonly launched interactively through explorer.exe, making the parent process creation time useful when establishing a timeline of user actions leading up to the execution of PowerShell commands.
+
 $${\color{green}__Screenshot \space Analysis__}$$
+
+<img width="1152" height="87" alt="image" src="https://github.com/user-attachments/assets/b8ffccfe-76bc-4fb4-a3ed-15036c70ae85" />
+<img width="1061" height="87" alt="image" src="https://github.com/user-attachments/assets/e30cb2e4-09d4-4347-9005-5e9fcc5b93d2" />
+
+The first two screenshots show the output of the windows.pslist plugin, which was used to identify the PowerShell process. The listing reveals that powershell.exe was assigned PID 5096 and that its parent process identifier was 4352, providing the information needed to investigate the process hierarchy.
+
+<img width="1892" height="257" alt="image" src="https://github.com/user-attachments/assets/1a78659e-02b8-40d5-867f-cdea0e1e7142" />
+
+The third screenshot shows the execution of the windows.pstree plugin filtered for PID 5096. The reconstructed process tree identifies explorer.exe (PID 4352) as the parent process of powershell.exe and displays its creation timestamp of _2021-04-30 17:39_, which is the requested answer.
+
+It worked! 🔥
 
 #### ❔  9: What is the full path and name of the last file opened in notepad?
 
 $${\color{red}__Analysis__}$$
+
+To identify the file that was opened with notepad.exe, the memory image was analyzed using Volatility 3 process enumeration and process tree reconstruction plugins. The investigation began by locating the Notepad process within the system's process list and identifying its associated Process ID (PID).
+
+The following command was used to locate the process: _python3 vol.py -f 20210430-Win10Home-20H2-64bit-memdump.mem windows.pslist | grep -3 notepad.exe_
+
+The output revealed that notepad.exe was running with PID 2520. After identifying the process, the windows.pstree plugin was executed to obtain additional execution details, including the full command-line arguments used when the process was launched: _python3 vol.py -f 20210430-Win10Home-20H2-64bit-memdump.mem windows.pstree --pid 2520_
+
+Inspection of the command-line arguments showed that Notepad had been launched with a file located in the user's temporary directory. The path visible in memory indicated that the file accountNum was opened by Notepad from: _C:\Users\JOHNDO~1\AppData\Local\Temp\..._
+
+The command-line artifact is particularly valuable because it preserves the exact file supplied to the application at launch time, allowing investigators to determine which document the user was viewing or editing.
+
 $${\color{yellow}__Evidence \space Interpretation__}$$
+
+Command-line arguments recovered from memory frequently provide insight into user activity that may not be immediately visible through process listings alone. In this case, the recovered execution details show that Notepad was used to access a file named accountNum, which may contain information relevant to the suspected activity. Such artifacts help establish user intent and application usage immediately prior to memory acquisition.
+
 $${\color{green}__Screenshot \space Analysis__}$$
+
+<img width="1227" height="167" alt="image" src="https://github.com/user-attachments/assets/7f47e944-6894-40a1-92ef-9d5959a9a41e" />
+
+The first screenshot shows the use of the windows.pslist plugin with output filtered for notepad.exe. This step identifies the target process and confirms that Notepad was running under PID 2520 at the time of acquisition.
+
+<img width="1890" height="146" alt="image" src="https://github.com/user-attachments/assets/4da61532-5f33-46f6-a889-b6a29ca773aa" />
+
+The second screenshot shows the execution of the windows.pstree plugin for PID 2520. The process details include the full command line used to launch Notepad, revealing that a file named _accountNum_ located within the user's temporary directory was opened by the application. This artifact provides direct evidence of the document being accessed through Notepad.
+
+It worked! 🔥
 
 #### ❔  10: How long did the suspect use Brave browser? (In Hours)
 
 $${\color{red}__Analysis__}$$
+
+determine how long the suspect used the Brave browser, Windows UserAssist artifacts were examined within the memory image. UserAssist entries are stored in the Windows Registry and maintain execution-related metadata for applications launched by a user, including run counts, timestamps, and accumulated execution time. These artifacts are particularly useful for reconstructing user activity and measuring application usage.
+
+Before conducting the analysis, the appropriate Volatility 3 plugin was identified by reviewing the framework documentation and available registry-analysis modules. The windows.registry.userassist plugin was selected because it parses UserAssist registry keys recovered from memory and extracts execution statistics associated with user-launched applications.
+
+The following command was executed to locate Brave-related entries: _python3 vol.py -f 20210430-Win10Home-20H2-64bit-memdump.mem windows.registry.userassist | grep Brave_
+
+The output contained several Brave-related UserAssist records, including entries for BraveUpdate.exe, Brave shortcuts, and the browser executable itself. The UserAssist data associated with the Brave browser indicated a runtime value of: _4:01_
+
+This corresponds to approximately _4_ hours of accumulated execution time, indicating that the browser had been used for slightly more than four hours on the system.
+
 $${\color{yellow}__Evidence \space Interpretation__}$$
+
+UserAssist artifacts provide valuable evidence of user interaction with applications because they are generated through normal Windows Explorer activity. Unlike simple process creation records, UserAssist entries can reveal how frequently an application was launched and how long it was actively used. The recovered runtime value demonstrates that Brave was a regularly used application on the workstation and provides context for the browser-related activity observed elsewhere in the investigation.
+
 $${\color{green}__Screenshot \space Analysis__}$$
 
+<img width="1177" height="842" alt="image" src="https://github.com/user-attachments/assets/f6ad5e69-5e1a-496b-9a12-c685e2e1b69d" />
 
+The first screenshot shows the Volatility 3 documentation for the windows.registry.userassist module. This step was used to identify the appropriate plugin capable of extracting UserAssist registry artifacts and execution statistics from the memory image prior to performing the analysis.
+
+<img width="1902" height="207" alt="image" src="https://github.com/user-attachments/assets/a5d4acf8-2590-4d25-86f4-446976fd314b" />
+
+The second screenshot shows the execution of the Volatility 3 windows.registry.userassist plugin with output filtered for Brave-related entries. The recovered UserAssist records include execution metadata, timestamps, and accumulated runtime information. One of the entries reports a total runtime of _4:01_, indicating that Brave had been used for just over _four hours_.
+
+It worked! 🔥
+
+All Done! 🥇
