@@ -252,7 +252,7 @@ It worked! 🔥
 
 $${\color{red}__Analysis__}$$
 
-determine how long the suspect used the Brave browser, Windows UserAssist artifacts were examined within the memory image. UserAssist entries are stored in the Windows Registry and maintain execution-related metadata for applications launched by a user, including run counts, timestamps, and accumulated execution time. These artifacts are particularly useful for reconstructing user activity and measuring application usage.
+To determine how long the suspect used the Brave browser, Windows UserAssist artifacts were examined within the memory image. UserAssist entries are stored in the Windows Registry and maintain execution-related metadata for applications launched by a user, including run counts, timestamps, and accumulated execution time. These artifacts are particularly useful for reconstructing user activity and measuring application usage.
 
 Before conducting the analysis, the appropriate Volatility 3 plugin was identified by reviewing the framework documentation and available registry-analysis modules. The windows.registry.userassist plugin was selected because it parses UserAssist registry keys recovered from memory and extracts execution statistics associated with user-launched applications.
 
