@@ -316,7 +316,7 @@ To further deobfuscate the script, a second Find/Replace operation was performed
 
 The first URL in the list begins with:
 
-_https://haoqunkong.com/bn/s9w4tgcjl_f6669ugu_w4bj/_
+_https://haoqunkong[.]com/bn/s9w4tgcjl_f6669ugu_w4bj/_
 
 Extracting the hostname from this URL identifies the first FQDN contacted by the malware as haoqunkong.com. The script then proceeds to reference additional domains that likely serve as backup download locations if the initial request fails.
 
@@ -342,7 +342,7 @@ The screenshot shows the initial Base64-decoded PowerShell script after removal 
 
 <img width="1542" height="707" alt="image" src="https://github.com/user-attachments/assets/3713560e-a8f3-4aa3-9742-ac17fe0e302c" />
 
-The screenshot shows the result of removing the inserted dot characters using CyberChef. The deobfuscated PowerShell script clearly reveals a list of download URLs, with the first entry pointing to _https://haoqunkong.com/..._, confirming _haoqunkong.com_ as the first FQDN contacted by the malware.
+The screenshot shows the result of removing the inserted dot characters using CyberChef. The deobfuscated PowerShell script clearly reveals a list of download URLs, with the first entry pointing to _https://haoqunkong.com/..._, confirming _haoqunkong[.]com_ as the first FQDN contacted by the malware.
 
 
 It worked! 🔥
