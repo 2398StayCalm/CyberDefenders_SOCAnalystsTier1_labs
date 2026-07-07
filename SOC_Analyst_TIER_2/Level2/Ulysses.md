@@ -185,36 +185,172 @@ The screenshot displays the output of Volatility's linux_netstat plugin. An esta
 
 #### ❔  7: What service was exploited to gain access to the system?
 
-$${\color{purple}__Finding Title__}$$
+$${\color{purple}__Exploitation\space of\space the\space Exim4\space Mail\space Transfer\space Service\space for\space Initial\space Access__}$$
 $${\color{red}__Analysis__}$$
+
+To identify the service used to compromise the system, both memory and disk-based artifacts were examined. Initial analysis was performed using Volatility's linux_netstat plugin, which revealed that the Exim4 mail service was actively listening on TCP port 25 (SMTP) at the time of memory acquisition. Among the services exposed to the network, Exim4 was the only service directly associated with suspicious external communications observed during the investigation.
+
+To validate whether Exim4 was involved in the attack, application logs located in /var/log/exim4 were examined using FTK Imager. Review of the rejectlog file revealed malicious SMTP traffic originating from attacker-associated hosts. The log entries contained command injection attempts embedded within SMTP communications and included commands designed to download and execute a remote Perl payload:
+
+<img width="722" height="20" alt="image" src="https://github.com/user-attachments/assets/ba065577-bbf7-4866-89a5-c4414d14d081" />
+
+The log entry showed that the SMTP transaction originated from 192.168.56.101 and attempted to execute commands that would retrieve a payload from 192.168.56.1 and establish outbound communications to port 4444. This behavior is consistent with known historical Exim vulnerabilities that allowed remote command execution through crafted SMTP messages.
+
+Additional validation was performed by reviewing Exim documentation and service information, confirming that Exim4 functions as a Mail Transfer Agent (MTA) responsible for handling SMTP traffic on port 25. The combination of exposed SMTP service, malicious SMTP log entries, and payload execution attempts strongly indicates that _Exim4_ was the attack vector used to gain access to the server.
+
 $${\color{yellow}__Evidence \space Interpretation__}$$
+
+The forensic evidence indicates that Exim4 was the service exploited by the attacker to obtain access to the system. Unlike SSH authentication events observed earlier in the investigation, the Exim4 logs contain direct evidence of malicious command execution attempts embedded within SMTP transactions.
+
+The attack appears to have leveraged Exim's mail processing functionality to inject operating system commands, resulting in the download and execution of a remote payload hosted on 192.168.56.1. The presence of shell processes, Netcat activity, and subsequent outbound connections observed in memory further support the conclusion that exploitation of the Exim4 service was the initial compromise mechanism.
+
+This finding establishes the likely entry point of the attack and links the attacker-controlled infrastructure directly to the compromised host.
+
 $${\color{green}__Screenshot \space Analysis__}$$
+
+<img width="962" height="417" alt="image" src="https://github.com/user-attachments/assets/c51a0542-7958-49ab-aff2-549307f67583" />
+
+The Volatility linux_netstat output shows _Exim4_ (PID 1942) listening on TCP port 25, confirming that the SMTP service was active and accessible from the network at the time of memory acquisition.
+
+<img width="1756" height="887" alt="image" src="https://github.com/user-attachments/assets/733243d6-5d10-4ab5-9ddc-2a7f8816a521" />
+
+FTK Imager displays the contents of the _Exim4_ rejectlog file. The log records SMTP activity involving attacker-associated IP addresses and contains evidence of command execution attempts referencing payload downloads from 192.168.56.1, directly linking the attack to the mail service.
+
+<img width="1060" height="731" alt="image" src="https://github.com/user-attachments/assets/e1e45181-ed0d-49a8-8901-55993ededad8" />
+
+The Exim documentation identifies Exim as a Mail Transfer Agent (MTA) responsible for processing SMTP communications. This supports the interpretation that the malicious SMTP traffic observed in the logs targeted the _Exim4_ service running on port 25.
+
+It worked! 🔥
 
 #### ❔  8: What is the CVE number of exploited vulnerability?
 
-$${\color{purple}__Finding Title__}$$
+$${\color{purple}__Identification\space of\space the\space Exim4\space Vulnerability\space Leveraged\space During\space the\space Compromise__}$$
 $${\color{red}__Analysis__}$$
+
+After determining that the Exim4 SMTP service was the likely attack vector, additional examination was conducted to identify the specific vulnerability exploited by the attacker. Using FTK Imager, the Exim4 mainlog file located in /var/log/exim4 was reviewed to obtain version information about the mail service running on the compromised server.
+
+The log entries revealed that the server was running: exim 4.69 daemon started
+
+This version information was particularly significant because the target system was previously identified as Debian GNU/Linux 5.0 (Lenny). Correlating the Exim version with publicly available vulnerability advisories and Debian security bulletins revealed that Exim versions prior to 4.70 were affected by CVE-2010-4344.
+
+According to Debian Security Advisory DSA-2131-1, CVE-2010-4344 is a heap-based buffer overflow vulnerability in Exim's string_vformat() function. The flaw allows a remote attacker to execute arbitrary code through specially crafted SMTP messages containing malicious headers. Successful exploitation may result in unauthorized command execution under the privileges of the Exim process.
+
+This vulnerability aligns with other evidence collected during the investigation, including malicious SMTP transactions, command injection attempts recorded in Exim logs, and the subsequent execution of payloads that established outbound communications with attacker-controlled infrastructure.
+
 $${\color{yellow}__Evidence \space Interpretation__}$$
+
+The evidence strongly suggests that the attackers exploited _CVE-2010-4344_ to gain access to the server. The determination is based on three key observations:
+
+1. The compromised host was running Exim version 4.69, as confirmed by the Exim mainlog.
+2. Exim 4.69 is documented as vulnerable to _CVE-2010-4344_.
+3. Exim logs contain malicious SMTP traffic and command execution attempts consistent with exploitation of an Exim remote code execution vulnerability.
+
+The attack chain observed during the investigation indicates that the SMTP service was targeted, malicious commands were injected through SMTP interactions, and payloads were subsequently downloaded and executed. These findings are consistent with known exploitation techniques associated with vulnerable Exim deployments.
+
 $${\color{green}__Screenshot \space Analysis__}$$
+
+<img width="1152" height="626" alt="image" src="https://github.com/user-attachments/assets/e50bbf35-f696-4648-a564-7cb04c5a80cf" />
+
+FTK Imager displays the Exim4 mainlog file located in /var/log/exim4. The log entries identify the running mail service as Exim 4.69, providing the version information required to perform vulnerability research.
+
+<img width="1552" height="865" alt="image" src="https://github.com/user-attachments/assets/420a62ce-47eb-46e1-ba6a-826930f596a6" />
+
+The Debian security advisory page for _CVE-2010-4344_ is shown. The advisory describes a heap-based buffer overflow vulnerability affecting Exim versions prior to 4.70 and identifies Exim 4.69 as a vulnerable release. This directly correlates with the version discovered on the compromised server and supports the conclusion that _CVE-2010-4344_ was the exploited vulnerability.
+
+It worked! 🔥
 
 #### ❔  9: During this attack, the attacker downloaded two files to the server. Provide the name of the compressed file.
 
-$${\color{purple}__Finding Title__}$$
+$${\color{purple}__Identification\space of\space the\space Compressed\space Payload\space Downloaded\space During\space the\space Attack__}$$
 $${\color{red}__Analysis__}$$
+
+Following identification of the Exim4 exploitation activity, the investigation continued with a review of the Exim4 mainlog file to determine what payloads were delivered to the compromised host. The mainlog contained SMTP transactions originating from attacker-controlled infrastructure and recorded command strings embedded within the malicious requests.
+
+Analysis of the log entries revealed multiple attempts to download files from the attacker-controlled host 192.168.56.1 using the wget utility. Two distinct file downloads were identified:
+<img width="301" height="21" alt="image" src="https://github.com/user-attachments/assets/c387ac43-2218-406b-bb08-8b40102149fe" />
+<img width="260" height="20" alt="image" src="https://github.com/user-attachments/assets/5eb466cb-1c0d-4709-a3d8-a8d0469fa2ad" />
+
+The second command downloads a file named _rk.tar_ and stores it locally in the /tmp directory. The .tar extension indicates a tar archive, a common compressed or packaged format used on Linux systems to bundle multiple files for transfer and deployment.
+
+Because the question specifically requests the name of the compressed file downloaded during the attack, the relevant artifact is: _rk.tar_
+
+The naming convention is notable because the abbreviation "rk" is frequently used to refer to rootkits in security investigations, although additional analysis would be required to conclusively determine the archive's contents.
+
 $${\color{yellow}__Evidence \space Interpretation__}$$
+
+The Exim4 logs provide direct evidence that the attacker attempted to download multiple files from 192.168.56.1 after successfully interacting with the vulnerable mail service. While file.txt appears to be a text-based resource, the archive _rk.tar_ represents a packaged payload intended for delivery to the compromised system.
+
+The use of a tar archive suggests that the attacker may have been transferring multiple files, scripts, binaries, or tools in a single package for later execution. Given the context of the intrusion and the suspicious naming convention, the archive should be considered a high-priority artifact for further forensic examination.
+
 $${\color{green}__Screenshot \space Analysis__}$$
+
+<img width="1911" height="982" alt="image" src="https://github.com/user-attachments/assets/e08e1cda-be52-432f-b0e4-ac7ad26b0d01" />
+
+The screenshot shows the contents of the Exim4 mainlog file being examined within FTK Imager. Embedded command strings reveal attacker-controlled wget requests directed at 192.168.56.1, including downloads of both file.txt and _rk.tar_. The highlighted entry specifically shows the retrieval of _rk.tar_, identifying it as the compressed file downloaded during the attack.
+
+It worked! 🔥
 
 #### ❔  10: During the investigation, two ports were involved in the process of data exfiltration. Which port did the nc command used for the exfiltration?
 
-$${\color{purple}__Finding Title__}$$
+$${\color{purple}__Identification\space of\space the\space Netcat\space Port\space Used\space for\space Data\space Exfiltration__}$$
 $${\color{red}__Analysis__}$$
+
+To determine which network port was used during the data exfiltration phase of the attack, the Volatility Framework's linux_netstat plugin was executed against the memory image using the custom LinuxDebian5_26x86 profile. This plugin enumerates active network connections and maps them to their associated processes, enabling investigators to identify communications involving potentially malicious tools.
+
+Analysis of the output revealed multiple suspicious network connections involving attacker-controlled infrastructure. Of particular interest was an established TCP connection associated with the Netcat (nc) process, identified as PID 2169. The connection showed communication between the victim host (192.168.56.102) and the remote host (192.168.56.1) over destination port 8888: 192.168.56.102:56955  192.168.56.1:8888  ESTABLISHED  nc/2169
+
+This finding correlates with other artifacts recovered during the investigation, including shell history entries that demonstrated the use of Netcat for transferring collected data to the attacker-controlled system. The established connection confirms that Netcat was actively communicating over port _8888_ at the time of memory acquisition.
+
 $${\color{yellow}__Evidence \space Interpretation__}$$
+
+The forensic evidence indicates that the Netcat (nc) utility used port 8888 for data exfiltration. Unlike the connections observed on port 4444, which were associated with shell activity and payload execution, the Netcat process itself maintained an active connection to _192.168.56.1:8888_.
+
+This distinction is important because multiple ports were involved throughout the attack lifecycle. The evidence demonstrates that port 8888 was specifically tied to the running Netcat process responsible for transferring data from the compromised host to the attacker's infrastructure. As a result, port _8888_ should be considered the primary exfiltration port used during the incident.
+
 $${\color{green}__Screenshot \space Analysis__}$$
+
+<img width="962" height="427" alt="image" src="https://github.com/user-attachments/assets/21c491a6-974f-4bdf-b631-2dda786f9c2b" />
+
+The screenshot displays the output of Volatility's linux_netstat plugin. The highlighted entry shows an ESTABLISHED TCP connection between 192.168.56.102 and 192.168.56.1 on port _8888_, with the associated process identified as nc/2169. This provides direct evidence that Netcat was using port _8888_ to communicate with the attacker-controlled host during the data exfiltration phase.
+
+It worked! 🔥
 
 #### ❔  11: Which port did the attacker try to block on the firewall?
 
-$${\color{purple}__Finding Title__}$$
+$${\color{purple}__Identification\space of\space the\space Firewall\space Port\space Blocked\space by\space the\space Attacker's\space Persistence\space Script__}$$
 $${\color{red}__Analysis__}$$
+
+To determine which port the attacker attempted to block on the compromised system, the investigation focused on artifacts previously identified as malicious payloads downloaded during the intrusion. Earlier analysis of the Exim4 logs revealed that the attacker downloaded the archive rk.tar, which was subsequently located within the /tmp directory using FTK Imager.
+
+Inspection of the extracted archive contents revealed several suspicious files commonly associated with post-exploitation toolkits and persistence mechanisms, including:
+
+- dropbear
+- install.sh
+- mig
+- vars.sh
+
+The installation script (install.sh) was examined using a text editor to identify any system modifications performed by the malware. Within the script, commands were found that established persistence through /etc/init.d/boot.local and modified local firewall rules using iptables.
+
+The following command was present in the script: /usr/sbin/iptables -I OUTPUT 1 -p tcp --dport 45295 -j DROP
+
+This command inserts a firewall rule at the top of the OUTPUT chain, causing all outbound TCP traffic destined for port _45295_ to be dropped. The presence of this command indicates that the attacker intentionally attempted to block communications over this port.
+
 $${\color{yellow}__Evidence \space Interpretation__}$$
+
+The recovered installation script provides direct evidence that the attacker attempted to block TCP port _45295_ through a persistent firewall rule. Because the rule is written into the system's startup configuration (/etc/init.d/boot.local), it would remain active after system reboots, demonstrating an effort to maintain long-term control over network behavior.
+
+From an investigative perspective, this action suggests the attacker was attempting to either suppress legitimate network communications, interfere with administrative access, disable competing services, or conceal malicious activity occurring on the host. The modification of firewall rules is a common post-exploitation technique used to strengthen persistence and reduce the likelihood of detection.
+
 $${\color{green}__Screenshot \space Analysis__}$$
 
+<img width="1146" height="702" alt="image" src="https://github.com/user-attachments/assets/f76046c8-edb5-452f-b796-fe9b1d8272d2" />
+
+FTK Imager displays the contents of the suspicious archive rk.tar located within the /tmp directory. The archive contains several files associated with attacker activity, including install.sh, which was selected for further examination.
+
+<img width="1147" height="477" alt="image" src="https://github.com/user-attachments/assets/1f35636f-f38e-44ec-8bcb-bc26a94a6b5d" />
+
+The contents of install.sh are shown in a text editor. The script contains an iptables command that inserts a firewall rule to drop outbound TCP traffic on port _45295_, clearly identifying the port that the attacker attempted to block on the compromised server.
+
+It worked! 🔥
+
+All Done! 🥇
