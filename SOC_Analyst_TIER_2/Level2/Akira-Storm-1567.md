@@ -511,7 +511,7 @@ The recovered text contains language consistent with Akira ransomware's double-e
 
 The highlighted URL, https   :   //akiral2iz6a7qgd3ayp3l6yub7xx2uep76idk3u2kollpj5z3z636bad   .   onion, appears repeatedly throughout the ransom note content and represents the attacker-controlled portal used for victim communication and ransom negotiations. This artifact provides valuable threat intelligence and confirms the ransomware family's operational infrastructure.
 
-Answer: _https://akiral2iz6a7qgd3ayp3l6yub7xx2uep76idk3u2kollpj5z3z636bad.onion_
+Answer: _https   :   //akiral2iz6a7qgd3ayp3l6yub7xx2uep76idk3u2kollpj5z3z636bad   .   onion_
 
 It worked! 🔥
 
